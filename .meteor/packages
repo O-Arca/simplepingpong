@@ -8,3 +8,7 @@ meteor-platform
 autopublish
 insecure
 digioak:meteor-phaser
+meteorhacks:npm
+
+
+npm-container
