@@ -1,0 +1,14 @@
+.game_box,#game_box,body
+{
+    text-align: center;
+    vertical-align: middle;
+    margin: 0;
+    padding: 0;
+}
+canvas
+{
+    padding-left: 0;
+    padding-right: 0;
+    margin-left: auto;
+    margin-right: auto;
+}
