@@ -1,157 +1,162 @@
   //work with voice
-  if (annyang) {
-      console.log('test');
-      // Let's define our first command. First the text we expect, and then the function it should call
-      var commands = {
-          'hello': function () {
-              console.log('done');
-              alert('Hello world!');
-          }
-      };
+  //  if (annyang) {
+  //      console.log('test');
+  //      // Let's define our first command. First the text we expect, and then the function it should call
+  //      var commands = {
+  //          'hello': function () {
+  //              console.log('done');
+  //              alert('Hello world!');
+  //          }
+  //      };
+  //
+  //      // Add our commands to annyang
+  //      annyang.addCommands(commands);
+  //
+  //      // Start listening. You can call this here, or attach this call to an event, button, etc.
+  //      annyang.start();
+  //  }
 
-      // Add our commands to annyang
-      annyang.addCommands(commands);
+  //  Template.Game.helpers({
+  //
+  //  });
+  //
+  //  Template.Game.events({
+  //
+  //  });
 
-      // Start listening. You can call this here, or attach this call to an event, button, etc.
-      annyang.start();
-  }
+var game = new Phaser.Game(800, 600, Phaser.AUTO, 'game_box', {
+        preload: preload,
+        create: create,
+        update: update
+    }),
+    playerBet,
+    opponentBet,
+    computerBet,
+    ball,
+    cursors,
+    statrtButton,
 
-  Template.Game.helpers({
+    computerBetSpeed = 275,
+    playerBetSpeed = 300,
+    ballSpeed = 300;
 
-  });
+game.state.add('Boot', boot);
+game.state.add('Preload', preload);
+game.state.add('GameTitle', gameTitle);
+game.state.add('TheGame', theGame);
+game.state.add('GameOver', gameOver);
+game.state.start('Boot');
 
-  Template.Game.events({
+function createBet(x, y, sprite) {
+    var bet = game.add.sprite(x, y, sprite);
+    game.physics.arcade.enable(bet);
+    bet.enableBody = true;
+    bet.anchor.setTo(0.5, 0.5);
+    bet.body.collideWorldBounds = true;
+    bet.body.bounce.setTo(1, 1);
+    bet.body.immovable = true;
+    bet.scale.set(0.5, 0.5);
+    bet.body.setSize(bet.width, bet.height / 2, 0, -bet.height / 4);
 
-  });
+    return bet;
+}
 
-  var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game_box', {
-      preload: preload,
-      create: create,
-      update: update
-  });
+var ballReleased = false;
 
-  var playerBet;
-  var opponentBet;
-  var computerBet;
-  var ball;
-  var cursors;
-  var statrtButton;
+function releaseBall() {
+    if (!ballReleased) {
+        ball.body.velocity.x = ballSpeed;
+        ball.body.velocity.y = -ballSpeed;
+        ballReleased = true;
+    }
+}
 
-  var computerBetSpeed = 275;
-  var playerBetSpeed = 300;
-  var ballSpeed = 300;
+function ballHitsBet(_ball, _bet) {
+    var diff = 0;
 
+    if (_ball.x < _bet.x) {
+        //  Шарик находится с левой стороны ракетки
+        diff = _bet.x - _ball.x;
+        _ball.body.velocity.x = (-10 * diff);
+    } else if (_ball.x > _bet.x) {
+        //  Шарик находится с правой стороны ракетки
+        diff = _ball.x - _bet.x;
+        _ball.body.velocity.x = (10 * diff);
+    } else {
+        //  Шарик попал в центр ракетки, добавляем немножко трагической случайности его движению
+        _ball.body.velocity.x = 2 + Math.random() * 8;
+    }
+}
 
-  function createBet(x, y, sprite) {
-      var bet = game.add.sprite(x, y, sprite);
-      game.physics.arcade.enable(bet);
-      bet.enableBody = true;
-      bet.anchor.setTo(0.5, 0.5);
-      bet.body.collideWorldBounds = true;
-      bet.body.bounce.setTo(1, 1);
-      bet.body.immovable = true;
-      bet.scale.set(0.5, 0.5);
-      bet.body.setSize(bet.width, bet.height / 2, 0, -bet.height / 4);
+function preload() {
+    game.load.image('ball', 'images/ball.png');
+    game.load.image('background', 'images/fon.png');
+    game.load.image('kurona', 'images/kuronaBet.png');
+    game.load.image('kuma', 'images/kumaBet.png');
+}
 
-      return bet;
-  }
+function create() {
+    game.physics.startSystem(Phaser.Physics.ARCADE);
+    game.add.tileSprite(0, 0, 1024, 768, 'background');
+    playerBet = createBet(game.world.centerX, 748, 'kurona');
+    computerBet = createBet(game.world.centerX, 110, 'kuma');
+    cursors = game.input.keyboard.createCursorKeys();
 
-  var ballReleased = false;
+    ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
+    game.physics.arcade.enable(ball);
+    ball.enableBody = true;
+    ball.anchor.setTo(0.5, 0.5);
+    ball.body.collideWorldBounds = true;
+    ball.body.bounce.setTo(1, 1);
 
-  function releaseBall() {
-      if (!ballReleased) {
-          ball.body.velocity.x = ballSpeed;
-          ball.body.velocity.y = -ballSpeed;
-          ballReleased = true;
-      }
-  }
+    game.input.onDown.add(releaseBall, this);
 
-  function ballHitsBet(_ball, _bet) {
-      var diff = 0;
+    statrtButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+}
 
-      if (_ball.x < _bet.x) {
-          //  Шарик находится с левой стороны ракетки
-          diff = _bet.x - _ball.x;
-          _ball.body.velocity.x = (-10 * diff);
-      } else if (_ball.x > _bet.x) {
-          //  Шарик находится с правой стороны ракетки
-          diff = _ball.x - _bet.x;
-          _ball.body.velocity.x = (10 * diff);
-      } else {
-          //  Шарик попал в центр ракетки, добавляем немножко трагической случайности его движению
-          _ball.body.velocity.x = 2 + Math.random() * 8;
-      }
-  }
+function update() {
+    //Управляем ракеткой игрока
+    //playerBet.x = game.input.x;
+    //playerBet.y = game.input.y;
+    if (cursors.left.isDown) {
+        playerBet.body.velocity.x = -playerBetSpeed;
+    } else if (cursors.right.isDown) {
+        playerBet.body.velocity.x = playerBetSpeed;
+    } else {
+        playerBet.body.velocity.x = 0;
+    }
+    if (cursors.up.isDown) {
+        playerBet.body.velocity.y = -playerBetSpeed;
+    } else if (cursors.down.isDown) {
+        playerBet.body.velocity.y = playerBetSpeed;
+    } else {
+        playerBet.body.velocity.y = 0;
+    }
 
-  function preload() {
-      game.load.image('ball', 'images/ball.png');
-      game.load.image('background', 'images/fon.png');
-      game.load.image('kurona', 'images/kuronaBet.png');
-      game.load.image('kuma', 'images/kumaBet.png');
-  }
+    var playerBetHalfWidth = playerBet.width / 2;
+    var playerBetHalfHeight = playerBet.height / 2;
 
-  function create() {
-      game.physics.startSystem(Phaser.Physics.ARCADE);
-      game.add.tileSprite(0, 0, 1024, 768, 'background');
-      playerBet = createBet(game.world.centerX, 748, 'kurona');
-      computerBet = createBet(game.world.centerX, 110, 'kuma');
-      cursors = game.input.keyboard.createCursorKeys();
+    if (playerBet.x < playerBetHalfWidth) {
+        playerBet.x = playerBetHalfWidth;
+    } else if (playerBet.x > game.width - playerBetHalfWidth) {
+        playerBet.x = game.width - playerBetHalfWidth;
+    }
+    if (playerBet.y < playerBetHalfHeight) {
+        playerBet.y = playerBetHalfHeight;
+    } else if (playerBet.y > game.height - playerBetHalfHeight) {
+        playerBet.y = game.height - playerBetHalfHeight;
+    }
+    //Управляем ракеткой компьютерного соперника
+    if (computerBet.x - ball.x < -20) {
+        computerBet.body.velocity.x = computerBetSpeed;
+    } else if (computerBet.x - ball.x > 20) {
+        computerBet.body.velocity.x = -computerBetSpeed;
+    } else {
+        computerBet.body.velocity.x = 0;
+    }
 
-      ball = game.add.sprite(game.world.centerX, game.world.centerY, 'ball');
-      game.physics.arcade.enable(ball);
-      ball.enableBody = true;
-      ball.anchor.setTo(0.5, 0.5);
-      ball.body.collideWorldBounds = true;
-      ball.body.bounce.setTo(1, 1);
+    //Проверяем и обрабатываем столкновения мячика и ракеток
+    game.physics.arcade.collide(ball, playerBet, ballHitsBet, null, this);
+    game.physics.arcade.collide(ball, computerBet, ballHitsBet, null, this);
 
-      game.input.onDown.add(releaseBall, this);
-
-      statrtButton = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
-  }
-
-  function update() {
-      //Управляем ракеткой игрока
-      //playerBet.x = game.input.x;
-      //playerBet.y = game.input.y;
-      if (cursors.left.isDown) {
-          playerBet.body.velocity.x = -playerBetSpeed;
-      } else if (cursors.right.isDown) {
-          playerBet.body.velocity.x = playerBetSpeed;
-      } else {
-          playerBet.body.velocity.x = 0;
-      }
-      if (cursors.up.isDown) {
-          playerBet.body.velocity.y = -playerBetSpeed;
-      } else if (cursors.down.isDown) {
-          playerBet.body.velocity.y = playerBetSpeed;
-      } else {
-          playerBet.body.velocity.y = 0;
-      }
-
-      var playerBetHalfWidth = playerBet.width / 2;
-      var playerBetHalfHeight = playerBet.height / 2;
-
-      if (playerBet.x < playerBetHalfWidth) {
-          playerBet.x = playerBetHalfWidth;
-      } else if (playerBet.x > game.width - playerBetHalfWidth) {
-          playerBet.x = game.width - playerBetHalfWidth;
-      }
-      if (playerBet.y < playerBetHalfHeight) {
-          playerBet.y = playerBetHalfHeight;
-      } else if (playerBet.y > game.height - playerBetHalfHeight) {
-          playerBet.y = game.height - playerBetHalfHeight;
-      }
-      //Управляем ракеткой компьютерного соперника
-      if (computerBet.x - ball.x < -20) {
-          computerBet.body.velocity.x = computerBetSpeed;
-      } else if (computerBet.x - ball.x > 20) {
-          computerBet.body.velocity.x = -computerBetSpeed;
-      } else {
-          computerBet.body.velocity.x = 0;
-      }
-
-      //Проверяем и обрабатываем столкновения мячика и ракеток
-      game.physics.arcade.collide(ball, playerBet, ballHitsBet, null, this);
-      game.physics.arcade.collide(ball, computerBet, ballHitsBet, null, this);
-
-  }
+}
